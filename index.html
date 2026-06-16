@@ -32,7 +32,7 @@
 html { scroll-behavior: smooth; font-size: 16px; -webkit-font-smoothing: antialiased; }
 body { background: var(--c1); color: var(--text); font-family: var(--ff); overflow-x: hidden; cursor: none; }
 
-/* CURSOR */ 
+/* CURSOR */
 #cursor {
   position: fixed; top: 0; left: 0; width: 10px; height: 10px;
   background: var(--accent-light); border-radius: 50%; pointer-events: none;
@@ -760,4 +760,46 @@ document.querySelectorAll('.btn-primary,.btn-outline,.nav-cta').forEach(btn=>{
   btn.addEventListener('mouseleave',()=>btn.style.transform='');
 });
 
-documen
+document.querySelectorAll('[data-tilt]').forEach(card=>{
+  card.addEventListener('mouseenter',()=>card.style.transition='none');
+  card.addEventListener('mousemove',e=>{ const r=card.getBoundingClientRect(); const cx2=(e.clientX-r.left)/r.width-.5, cy2=(e.clientY-r.top)/r.height-.5; card.style.transform=`perspective(1000px) rotateY(${cx2*6}deg) rotateX(${-cy2*6}deg) translateZ(8px)`; });
+  card.addEventListener('mouseleave',()=>{ card.style.transform=''; card.style.transition='transform 0.5s cubic-bezier(0.16,1,0.3,1)'; });
+});
+
+const ctaForm = document.getElementById('cta-form');
+const ctaStatus = document.getElementById('cta-status');
+if (ctaForm) {
+  ctaForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = ctaForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+    ctaStatus.className = 'cta-status';
+    ctaStatus.textContent = '';
+    try {
+      const res = await fetch(ctaForm.action, {
+        method: 'POST',
+        body: new FormData(ctaForm),
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        ctaForm.reset();
+        ctaStatus.className = 'cta-status success';
+        ctaStatus.textContent = "Thanks — we'll be in touch shortly.";
+      } else {
+        const data = await res.json().catch(() => ({}));
+        ctaStatus.className = 'cta-status error';
+        ctaStatus.textContent = (data.errors && data.errors[0] && data.errors[0].message) || 'Something went wrong. Please try again.';
+      }
+    } catch {
+      ctaStatus.className = 'cta-status error';
+      ctaStatus.textContent = 'Network error. Please try again.';
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  });
+}
+</script>
+</body>
+</html>
